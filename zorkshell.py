@@ -1,4 +1,4 @@
-#!`which python`
+#!/usr/bin/env python
 
 import os
 import sys
@@ -16,15 +16,8 @@ def log(*args):
     if DEBUG:
         print "# ", args
     
-if os.geteuid() == 0:
-    sys.stderr.write("Don't run me as root.\n")
-    os.exit(1)
-command = 'zork'
-masters, slaves = zip(pty.openpty(), pty.openpty())
-p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=slaves[0], stderr=slaves[1], shell=True, executable='/bin/bash')
-for fd in slaves: os.close(fd)
 
-def read_subprocess( p ):
+def read_subprocess( p, sockets ):
     stdout = ''
     done = False
 
@@ -59,23 +52,38 @@ def read_subprocess( p ):
         sys.stdout.flush()
     return ( stdout )
 
+def zorkshell_command_dispatch( command ):
+    print "## zorkshell command \"%s\" not implemented." % command
+
+# void main() 
+
+if os.geteuid() == 0:
+    sys.stderr.write("Don't run me as root.\n")
+    os.exit(1)
+command = 'zork'
+masters, slaves = zip(pty.openpty(), pty.openpty())
+p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=slaves[0], stderr=slaves[1])
+for fd in slaves: os.close(fd)
+
+zork_output = read_subprocess( p, masters )
+
 done = False
 while not done:
 
     game_over = re.compile( 'The game is over.\r\n$', re.MULTILINE )
-    
-    zork_output = read_subprocess( p )
+    command_prefix = re.compile( '^\\\\' )
     
     if game_over.search( zork_output ):
         done = True
     else:
         input = sys.stdin.readline()
-        try:
+
+        if command_prefix.match( input ):
+            zorkshell_command_dispatch( input.strip() )
+        else:
             p.stdin.write( input )
-        except OSError as e:
-            if e.errno != errno.EIO:
-                raise
-        time.sleep( .01 )
+            time.sleep( .01 )
+            zork_output = read_subprocess( p, masters )
 
 for fd in masters: os.close(fd)
 p.wait()
