@@ -9,10 +9,12 @@ import pty
 import time
 import re
 
+DEBUG=False
 READ_BUFFSIZE=1024
 
 def log(*args):
-    print "# ", args
+    if DEBUG:
+        print "# ", args
     
 if os.geteuid() == 0:
     sys.stderr.write("Don't run me as root.\n")
@@ -24,7 +26,6 @@ for fd in slaves: os.close(fd)
 
 def read_subprocess( p ):
     stdout = ''
-    stderr = ''
     done = False
 
     ending_regexp = re.compile( '>$|\?\r\n$|The game is over\.\r\n$', re.MULTILINE )
@@ -46,7 +47,7 @@ def read_subprocess( p ):
                     done = True
                     if e.errno != errno.EIO:
                         raise
-        time.sleep(.1)
+        time.sleep(.01)
         if p.poll():
             done = True
         
@@ -56,22 +57,27 @@ def read_subprocess( p ):
     if( stdout ):
         sys.stdout.write( stdout )
         sys.stdout.flush()
-    return ( stdout, stderr )
+    return ( stdout )
 
-while not p.poll():
+done = False
+while not done:
 
-    read_subprocess( p )
-
-    input = sys.stdin.readline()
-    try:
-        p.stdin.write( input )
-    except OSError as e:
-        if e.errno != errno.EIO:
-            raise
-    time.sleep( .01 )
-
+    game_over = re.compile( 'The game is over.\r\n$', re.MULTILINE )
+    
+    zork_output = read_subprocess( p )
+    
+    if game_over.search( zork_output ):
+        done = True
+    else:
+        input = sys.stdin.readline()
+        try:
+            p.stdin.write( input )
+        except OSError as e:
+            if e.errno != errno.EIO:
+                raise
+        time.sleep( .01 )
 
 for fd in masters: os.close(fd)
-
+p.wait()
 
     
