@@ -9,13 +9,14 @@ import pty
 import time
 import re
 
+from lib.common import register_zorkshell_command, zorkshell_command_dispatch
+
 DEBUG=False
 READ_BUFFSIZE=1024
 
 def log(*args):
     if DEBUG:
         print "# ", args
-    
 
 def read_subprocess( p, sockets ):
     stdout = ''
@@ -52,26 +53,33 @@ def read_subprocess( p, sockets ):
         sys.stdout.flush()
     return ( stdout )
 
-def zorkshell_command_dispatch( command ):
-    print "## zorkshell command \"%s\" not implemented." % command
+def zorkshell_command_echo( subprocess, *args ):
+    sys.stdout.write( "# echo:" )
+    for a in args:
+        sys.stdout.write( "%s" % a )
+    sys.stdout.write( "\n" )
+    return 0
+    
 
 # void main() 
 
 if os.geteuid() == 0:
     sys.stderr.write("Don't run me as root.\n")
     os.exit(1)
-command = 'zork'
+    
 masters, slaves = zip(pty.openpty(), pty.openpty())
-p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=slaves[0], stderr=slaves[1])
+p = subprocess.Popen('zork', stdin=subprocess.PIPE, stdout=slaves[0], stderr=slaves[1])
 for fd in slaves: os.close(fd)
+
+game_over = re.compile( 'The game is over.\r\n$', re.MULTILINE )
+command_prefix = re.compile( '^\\\\' )
+
+register_zorkshell_command( "\echo", zorkshell_command_echo )
 
 zork_output = read_subprocess( p, masters )
 
 done = False
 while not done:
-
-    game_over = re.compile( 'The game is over.\r\n$', re.MULTILINE )
-    command_prefix = re.compile( '^\\\\' )
     
     if game_over.search( zork_output ):
         done = True
@@ -79,7 +87,7 @@ while not done:
         input = sys.stdin.readline()
 
         if command_prefix.match( input ):
-            zorkshell_command_dispatch( input.strip() )
+            zorkshell_command_dispatch( input.strip(), p )
         else:
             p.stdin.write( input )
             time.sleep( .01 )
