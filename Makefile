@@ -5,3 +5,6 @@ all:
 
 clean:
 	rm -f dsave.dat *~ \#*
+	cd lib && make clean
+	cd modules && make clean
+
