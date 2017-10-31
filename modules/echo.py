@@ -12,7 +12,7 @@ class Echo(ZorkModule):
         return 0
 
     def __init__( self ):
-        register_zorkshell_command( '\echo', self.echo )
+        register_zorkshell_command( '/echo', self.echo )
 
 m = Echo()
 register_zorkshell_module( 'Echo', m )

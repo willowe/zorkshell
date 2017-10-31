@@ -12,7 +12,7 @@ __all__ = [ 'log', 'debug', 'command_prefix',
 __zorkshell_commands = {}
 __zorkshell_modules  = {}
 
-command_prefix = re.compile( '^\\\\' )
+command_prefix = re.compile( '^/' )
 
 DEBUG=True
 

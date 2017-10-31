@@ -44,8 +44,8 @@ class ZSave(ZorkModule):
     def __init__( self ):
         self.__saving=False
         self.__restoring=False
-        register_zorkshell_command( '\\restore', self.restore )        
-        register_zorkshell_command( '\\save', self.save )
+        register_zorkshell_command( '/restore', self.restore )        
+        register_zorkshell_command( '/save', self.save )
 
 
 m = ZSave()
