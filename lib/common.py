@@ -14,14 +14,14 @@ __zorkshell_modules  = {}
 
 command_prefix = re.compile( '^\\\\' )
 
-DEBUG=False
+DEBUG=True
 
 def debug(*args):
     if DEBUG:
-        sys.stderr.write( "#D# %s\n" % ' '.join(args) )
+        sys.stdout.write( "[DEBUG %s]\n" % ' '.join(args) )
 
 def log(*args):
-    sys.stderr.write( "#L# %s\n" % ' '.join(args) )
+    sys.stdout.write( "[LOG   %s]\n" % ' '.join(args) )
 
 def register_zorkshell_command( command, handler ):
     if not command_prefix.match( command ):
@@ -30,6 +30,7 @@ def register_zorkshell_command( command, handler ):
     if __zorkshell_commands.has_key( command ):
         raise "Already registered zorkshell command %s" % command
     else:
+        debug( "registering handler for %s" % command )
         __zorkshell_commands[command.lower()] = handler
 
 
@@ -38,7 +39,7 @@ def zorkshell_command_dispatch( commandline, subprocess ):
     command = args.pop(0).lower()
 
     if not __zorkshell_commands.has_key( command ):
-        log( "# no command registered for \\%s" % command )
+        log( "ERROR: no command registered for \%s" % command )
     else:
         __zorkshell_commands[command]( subprocess, args )
 
