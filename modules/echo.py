@@ -5,11 +5,7 @@ from module import ZorkModule
 class Echo(ZorkModule):
 
     def echo( self, subprocess, args ):
-        sys.stdout.write( "# echo:" )
-        for a in args:
-            sys.stdout.write( "%s" % a )
-            sys.stdout.write( "\n" )
-        return 0
+        log( "ECHO: %s" % ' '.join(args) )
 
     def __init__( self ):
         register_zorkshell_command( '/echo', self.echo )

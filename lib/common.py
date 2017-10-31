@@ -14,7 +14,7 @@ __zorkshell_modules  = {}
 
 command_prefix = re.compile( '^/' )
 
-DEBUG=True
+DEBUG=False
 
 def debug(*args):
     if DEBUG:
@@ -39,7 +39,7 @@ def zorkshell_command_dispatch( commandline, subprocess ):
     command = args.pop(0).lower()
 
     if not __zorkshell_commands.has_key( command ):
-        log( "ERROR: no command registered for \%s" % command )
+        log( "ERROR: no command registered for /%s" % command )
     else:
         __zorkshell_commands[command]( subprocess, args )
 
