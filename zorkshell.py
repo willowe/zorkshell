@@ -9,14 +9,11 @@ import pty
 import time
 import re
 
-from lib.common import register_zorkshell_command, zorkshell_command_dispatch
+from lib.common import *
+import modules.echo
+import modules.save
 
-DEBUG=False
 READ_BUFFSIZE=1024
-
-def log(*args):
-    if DEBUG:
-        print "# ", args
 
 def read_subprocess( p, sockets ):
     stdout = ''
@@ -24,19 +21,21 @@ def read_subprocess( p, sockets ):
 
     ending_regexp = re.compile( '>$|\?\r\n$|The game is over\.\r\n$', re.MULTILINE )
     
-    log( "read_subprocess" )
+    debug( "read_subprocess" )
         
     while not done:
-        log( "select" )
+        debug( "select" )
         fds = select.select([ masters[0], masters[1] ], [], [], 0)[0]
-        log( "returned %d fds" % len(fds) )
+        debug( "returned %d fds" % len(fds) )
         if len(fds) > 0:
             for fd in fds:
                 try:
                     data = os.read(fd, 1024)
-                    log( "read: %s" % data )
+                    debug( "read: %s" % data )
                     if len(data) > 0:
                         stdout += data
+                        sys.stdout.write( data )
+                        sys.stdout.flush()
                 except OSError as e:
                     done = True
                     if e.errno != errno.EIO:
@@ -48,18 +47,10 @@ def read_subprocess( p, sockets ):
         if ending_regexp.search( stdout ):
             done = True
 
-    if( stdout ):
-        sys.stdout.write( stdout )
-        sys.stdout.flush()
+#    if( stdout ):
+#        sys.stdout.write( stdout )
+#        sys.stdout.flush()
     return ( stdout )
-
-def zorkshell_command_echo( subprocess, *args ):
-    sys.stdout.write( "# echo:" )
-    for a in args:
-        sys.stdout.write( "%s" % a )
-    sys.stdout.write( "\n" )
-    return 0
-    
 
 # void main() 
 
@@ -72,9 +63,6 @@ p = subprocess.Popen('zork', stdin=subprocess.PIPE, stdout=slaves[0], stderr=sla
 for fd in slaves: os.close(fd)
 
 game_over = re.compile( 'The game is over.\r\n$', re.MULTILINE )
-command_prefix = re.compile( '^\\\\' )
-
-register_zorkshell_command( "\echo", zorkshell_command_echo )
 
 zork_output = read_subprocess( p, masters )
 
@@ -92,6 +80,7 @@ while not done:
             p.stdin.write( input )
             time.sleep( .01 )
             zork_output = read_subprocess( p, masters )
+            run_zork_output_processors( zork_output )
 
 for fd in masters: os.close(fd)
 p.wait()
