@@ -8,3 +8,6 @@ clean:
 	cd lib && make clean
 	cd modules && make clean
 
+reallyclean:
+	$(MAKE) clean
+	rm -f *.dat
