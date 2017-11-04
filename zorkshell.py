@@ -27,21 +27,24 @@ sys.stdout.flush()
 done = False
 while not done:
 
-    
     if game_over.search( zork_output ):
         done = True
-    else:
-        input = sys.stdin.readline()
 
-        if command_prefix.match( input ):
-            zorkshell_command_dispatch( input.strip(), z )
-        else:
-            z.write_to_zork( input, echo=False )
-            time.sleep( .01 )
+    else:
+        if z.needs_read():
             zork_output = z.read_zork_output()
             sys.stdout.write( zork_output )
             sys.stdout.flush()
             run_zork_output_processors( zork_output )
+        else:
+            input = sys.stdin.readline()
+
+            if command_prefix.match( input ):
+                zorkshell_command_dispatch( input.strip(), z )
+            else:
+                z.write_to_zork( input, echo=False )
+                
+
 
 
     
