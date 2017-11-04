@@ -12,7 +12,7 @@ __all__ = [ 'log', 'debug', 'command_prefix',
 __zorkshell_commands = {}
 __zorkshell_modules  = {}
 
-command_prefix = re.compile( '^/' )
+command_prefix = re.compile( '^/.*' )
 
 DEBUG=False
 
@@ -39,7 +39,7 @@ def zorkshell_command_dispatch( commandline, subprocess ):
     command = args.pop(0).lower()
 
     if not __zorkshell_commands.has_key( command ):
-        log( "ERROR: no command registered for /%s" % command )
+        log( "ERROR: no command registered for %s" % command )
     else:
         __zorkshell_commands[command]( subprocess, args )
 
@@ -47,6 +47,7 @@ def register_zorkshell_module( name, module ):
     if __zorkshell_modules.has_key( name ):
         raise "Already registered zork module %s" % name
     else:
+        log( "Registering module: %s" % name )
         __zorkshell_modules[name] = module
 
 def run_zork_output_processors( text ):

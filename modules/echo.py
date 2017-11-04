@@ -4,7 +4,7 @@ from module import ZorkModule
 
 class Echo(ZorkModule):
 
-    def echo( self, subprocess, args ):
+    def echo( self, z, args ):
         log( "ECHO: %s" % ' '.join(args) )
 
     def __init__( self ):

@@ -7,12 +7,13 @@ class ZSave(ZorkModule):
 
     zork_builtin_save_filename = 'dsave.dat'
     
-    def save( self, subprocess, args ):
+    def save( self, z, args ):
         self.__saving=True
         self.__name = "%s.dat" % args.pop()
-        subprocess.stdin.write( "save\n" )
+        log( "save: starting save to %s" % self.__name )
+        z.write_to_zork( "save\n" )
 
-    def restore( self, subprocess, args ):
+    def restore( self, z, args ):
         self.__name = "%s.dat" % args.pop()
         
         if not os.path.exists( self.__name ):
@@ -22,7 +23,7 @@ class ZSave(ZorkModule):
 
         shutil.copyfile( self.__name, ZSave.zork_builtin_save_filename )
         self.__restoring = True
-        subprocess.stdin.write( "restore\n" )
+        z.write_to_zork( "restore\n" )
         
         
     def output_processor( self, text ):
