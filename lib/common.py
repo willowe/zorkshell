@@ -50,10 +50,10 @@ def register_zorkshell_module( name, module ):
         log( "Registering module: %s" % name )
         __zorkshell_modules[name] = module
 
-def run_zork_output_processors( text ):
+def run_zork_output_processors( text, z ):
     k = __zorkshell_modules.keys()
     k.sort()
     for name in k:
-        __zorkshell_modules[name].output_processor( text )
+        __zorkshell_modules[name].output_processor( text, z )
     
 

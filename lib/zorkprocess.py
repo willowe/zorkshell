@@ -22,6 +22,9 @@ class ZorkProcess:
         self.__subprocess = None
         self.__last_command = None
         self.__needs_read = False
+
+    def last_write( self ):
+        return self.__last_command
         
     def start_zork( self ):
         self.__masters, self.__slaves = zip(pty.openpty(), pty.openpty())
@@ -41,7 +44,16 @@ class ZorkProcess:
         stdout = ''
         done = False
 
+        start_time = time.time()
+        
         while not done:
+
+            t = time.time()
+            if ( t - start_time ) > 5:
+                log( "It's taken more than 5s to read from zork.  Here's what I've got so far: ")
+                log( stdout )
+                raise ValueError
+            
             fds = select.select([ self.__masters[0], self.__masters[1] ], [], [], 0)[0]
             if len(fds) > 0:
                 for fd in fds:

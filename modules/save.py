@@ -26,7 +26,7 @@ class ZSave(ZorkModule):
         z.write_to_zork( "restore\n" )
         
         
-    def output_processor( self, text ):
+    def output_processor( self, text, z ):
         if self.__saving == True:
             if text.startswith( 'Saved.' ):
                 os.rename( ZSave.zork_builtin_save_filename, self.__name )

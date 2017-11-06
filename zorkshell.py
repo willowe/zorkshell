@@ -35,7 +35,7 @@ while not done:
             zork_output = z.read_zork_output()
             sys.stdout.write( zork_output )
             sys.stdout.flush()
-            run_zork_output_processors( zork_output )
+            run_zork_output_processors( zork_output, z )
         else:
             input = sys.stdin.readline()
 
