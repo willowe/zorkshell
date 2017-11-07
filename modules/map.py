@@ -1,5 +1,6 @@
 import hashlib
 import re
+import pickle
 from module import ZorkModule
 from lib.common import *
 
@@ -13,7 +14,9 @@ ignore = { "You can't go that way.\r\n>": 1,
 
 motion_commands = [ "north", "south", "east", "west", "up", "down", "ne", "se", "nw", "sw" ]
 
-first_sentence = re.compile( "^[^\.].*\.?" )
+# room names are sequences of capitalized words
+# still need to handle "Bottom of Well"
+room_name_regexp = re.compile( "^[A-Z][a-z\-]+\s*(of|to|[A-Z][a-z\-]+\s*)*$" )
 
 class ZorkRoom:
     def __init__( self, name ):
@@ -26,17 +29,15 @@ class ZorkRoom:
 
     def update_description( self, text ):
         self.descr = text
-        
+
 class ZorkMap( ZorkModule ):
-
+    
     def show_map( self, z, args ):
-
         if not self.current_room:
             log( "map: I don't know what room we're in" )
             return
         
         log( "map: showing exits for %s" % self.current_room.name )
-
         for d in self.current_room.directions.keys():
             s = self.rooms[self.current_room.directions[d]]
             log( "map:               %2s: %s" % (d, s.name) )
@@ -55,35 +56,62 @@ class ZorkMap( ZorkModule ):
 
         lines = re.split( "\r\n", text )
 
-        if re.match( "^l(ook)?", last_action ) and text.startswith( "You are" ) and self.current_room:
-            self.current_room.update_description( text )
-        
-        if text.startswith( "You " ) or text.startswith( "The ") or text.startswith( "There is " ):
-            return
-        
-        if not is_motion:
-            debug( "map: last action wasn't motion" )
-            return
+        if room_name_regexp.match( lines[0] ):
 
-        name = lines[0]
-        
-        if not self.rooms.has_key( name ):
-            log( "map: new room" )
-            r = ZorkRoom( name )
-            self.rooms[name] = r
+            name = lines[0]
+            if not self.rooms.has_key( name ):
+                log( "map: new room" )
+                r = ZorkRoom( name )
+                self.rooms[name] = r
             
-        if self.current_room:
-            self.current_room.add_exit( last_action, name )
+            if self.current_room and is_motion:
+                log( "map: adding exit %s to %s: %s" % ( last_action, self.current_room.name, name )) 
+                self.current_room.add_exit( last_action, name )
 
-        self.current_room = self.rooms[name]
-        
+            self.current_room = self.rooms[name]
+
+        else:
+            
+            if re.match( "^l(ook)?", last_action ) and text.startswith( "You are" ) and self.current_room:
+                log( "map: updated room description for %s" % self.current_room.name )
+                self.current_room.update_description( text )
+            else:
+                self.current_room = None
+                
         # todo:  keep an inventory of what's in each room based on "you can see:"
         
+    def save_map( self, z, args ):
 
+        filename = "map.pickle"
+        if len(args) > 0:
+            filename = "%s.pickle" % args.pop()
+
+        f = open( filename, "w" )
+        pickle.dump( self.rooms, f )
+        f.close
+
+        log( "saved map to %s" % filename )
+            
+
+    def load_map( self, z, args ):
+
+        filename = "map.pickle"
+        if len(args) > 0:
+            filename = "%s.pickle" % args.pop()
+
+        f = open( filename, "w" )
+        self.rooms = pickle.load( f )
+        f.close
+
+        log( "loaded map to %s" % filename )
+
+        
     def __init__( self ):
         self.rooms = {}
         self.current_room = None
         register_zorkshell_command( "/map", self.show_map )
+        register_zorkshell_command( "/savemap", self.save_map )
+        register_zorkshell_command( "/loadmap", self.save_map )
         log( "map: please make sure \"brief\" descriptions are on." )
         
 
