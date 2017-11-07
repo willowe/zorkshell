@@ -48,11 +48,6 @@ class ZorkProcess:
         
         while not done:
 
-            t = time.time()
-            if ( t - start_time ) > 5:
-                log( "It's taken more than 5s to read from zork.  Here's what I've got so far: ")
-                log( stdout )
-                raise ValueError
             
             fds = select.select([ self.__masters[0], self.__masters[1] ], [], [], 0)[0]
             if len(fds) > 0:
@@ -72,6 +67,11 @@ class ZorkProcess:
                 done = True
         
             if ending_regexp.search( stdout ):
+                done = True
+
+            t = time.time()
+            if ( t - start_time ) > 2:
+                log( "It's taken more than 2s to read from zork" )
                 done = True
 
         self.__needs_read = False
