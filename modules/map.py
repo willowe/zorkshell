@@ -39,7 +39,44 @@ class ZorkRoom:
         for a in args:
             self.inventory.append( a )
 
+    def _next_exit( self, e ):
+        exits = self.directions.keys().sort()
+        if len(exits) < 1:
+            return None
+
+        if e == None:
+            return exits[0]
+
+        i = 0
+        found = 0
+        while i < len(exits) and not found:
+            if exits[i] == e:
+                found = i + 1
+            i += 1
+
+        if found < len(exits):
+            return exits[found]
+            
+        return None
+        
+
 class ZorkMap( ZorkModule ):
+
+    def find_a_path( self, z, args ):
+        room_name = " ".join( args )
+        
+        if not self.rooms.has_key( room_name ):
+            log( "I can't find a room named %s" % room_name )
+            return
+        
+        log( "searching for a path to %s" % room_name )
+
+        c = self.current_room
+        path = []
+        e = c._next_exit( None )
+
+        path.append( (c, e) )
+        
     
     def show_map( self, z, args ):
         if not self.current_room:
@@ -90,9 +127,9 @@ class ZorkMap( ZorkModule ):
                 self.current_room = None
 
         inventory = []
+        you_can_see = False
         for l in lines:
-            you_can_see = False
-            if you_can_see:
+            if you_can_see and not l.endswith( "contains:" ) and not ignore.has_key( l ):
                 inventory.append( l )
             else:
                 m = inventory_regexp.match( l )
@@ -135,14 +172,13 @@ class ZorkMap( ZorkModule ):
         log( "loaded map to %s" % filename )
 
     def find_item( self, z, args ):
-
         text = args.pop()
 
         log( "map: searching for an item matching \"%s\"" % text )
         
         for n,r in self.rooms.items():
             for i in r.inventory:
-                if i.find( text ):
+                if i.find( text ) != -1:
                     log( "map: %s: %s" % ( n, i ) )
         
     def __init__( self ):
