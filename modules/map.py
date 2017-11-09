@@ -65,6 +65,11 @@ class ZorkRoom:
 class ZorkMap( ZorkModule ):
 
     def find_a_path( self, z, args ):
+
+        # this is a brute-force depth-first search
+        # not guarunteed to find the *shortest* path
+        # probably suboptimal,  but hey it works
+        
         room_name = " ".join( args )
         
         if not self.rooms.has_key( room_name ):
@@ -77,37 +82,42 @@ class ZorkMap( ZorkModule ):
         path = []
         path.append( (c, None ) )
                      
-        done = False
-        while len(path) > 0 and not done:
+        found = False
+        while len(path) > 0 and not found:
 
             r = path[-1][0]                 # last room in the path
             e = r._next_exit(path[-1][1])   # exit in "r" we're about to walk through
             path.pop()                      # remove the last exit we tried
 
             if e:
+                # walk through the new exit
+                path.append( (r, e) )
+                # and end up in the room named ...
+                n = r.directions[e]             
+
                 walked_in_a_circle = False
                 path_string = ""
                 for s in path:
-                    if s[0].name == r.name:
+                    if s[0].name == n:
                         walked_in_a_circle = True
                     path_string = " ".join([ path_string, "%s:%s" % (s[0].name, s[1]) ])
-                path_string = " ".join( [ path_string, "%s:%s" % (r.name, e) ] )
                 log( "map: inspecting path %s" % path_string )
 
-                path.append( (r, e) )           # walk through the new exit
-                n = r.directions[e]             # name of room we'll end up in 
-
                 if walked_in_a_circle:
-                    # zilly zork maps have cycles
+                    # go backwards and try a different exit from the same room
                     log( "detected cycle" )
-                    next 
                 elif n == room_name:
-                    # woohoo
-                    done = True
-                    log( "FOUND PATH" )
+                    # woohoo we're done
+                    found = True
                 else:
-                    path.append( (self.rooms[n], None) )  # repeat in the next room
-                
+                    # stay in the new room and start trying its exits
+                    path.append( (self.rooms[n], None) ) 
+
+        if found:
+            log( "map: /nav found a path" )
+        else:
+            log( "map: no paths found" )
+                    
     
     def show_map( self, z, args ):
         if not self.current_room:
@@ -217,7 +227,7 @@ class ZorkMap( ZorkModule ):
         self.current_room = None
         register_zorkshell_command( "/map", self.show_map )
         register_zorkshell_command( "/savemap", self.save_map )
-        register_zorkshell_command( "/loadmap", self.save_map )
+        register_zorkshell_command( "/loadmap", self.load_map )
         register_zorkshell_command( "/finditem", self.find_item )
         register_zorkshell_command( "/nav", self.find_a_path )
         log( "map: please make sure \"brief\" descriptions are on." )
