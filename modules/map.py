@@ -40,7 +40,9 @@ class ZorkRoom:
             self.inventory.append( a )
 
     def _next_exit( self, e ):
-        exits = self.directions.keys().sort()
+
+        exits = self.directions.keys()
+        exits.sort()
         if len(exits) < 1:
             return None
 
@@ -73,10 +75,39 @@ class ZorkMap( ZorkModule ):
 
         c = self.current_room
         path = []
-        e = c._next_exit( None )
+        path.append( (c, None ) )
+                     
+        done = False
+        while len(path) > 0 and not done:
 
-        path.append( (c, e) )
-        
+            r = path[-1][0]                 # last room in the path
+            e = r._next_exit(path[-1][1])   # exit in "r" we're about to walk through
+            path.pop()                      # remove the last exit we tried
+
+            if e:
+                walked_in_a_circle = False
+                path_string = ""
+                for s in path:
+                    if s[0].name == r.name:
+                        walked_in_a_circle = True
+                    path_string = " ".join([ path_string, "%s:%s" % (s[0].name, s[1]) ])
+                path_string = " ".join( [ path_string, "%s:%s" % (r.name, e) ] )
+                log( "map: inspecting path %s" % path_string )
+
+                path.append( (r, e) )           # walk through the new exit
+                n = r.directions[e]             # name of room we'll end up in 
+
+                if walked_in_a_circle:
+                    # zilly zork maps have cycles
+                    log( "detected cycle" )
+                    next 
+                elif n == room_name:
+                    # woohoo
+                    done = True
+                    log( "FOUND PATH" )
+                else:
+                    path.append( (self.rooms[n], None) )  # repeat in the next room
+                
     
     def show_map( self, z, args ):
         if not self.current_room:
@@ -84,9 +115,11 @@ class ZorkMap( ZorkModule ):
             return
         
         log( "map: showing exits for %s" % self.current_room.name )
-        for d in self.current_room.directions.keys():
-            s = self.rooms[self.current_room.directions[d]]
-            log( "map:               %2s: %s" % (d, s.name) )
+        exits = self.current_room.directions.keys()
+        exits.sort()
+        for e in exits:
+            s = self.rooms[self.current_room.directions[e]]
+            log( "map:               %2s: %s" % (e, s.name) )
         
     def output_processor( self, text, z ):
         
@@ -114,7 +147,6 @@ class ZorkMap( ZorkModule ):
             if self.current_room and is_motion:
                 debug( "map: adding exit %s to %s: %s" % ( last_action, self.current_room.name, name )) 
                 self.current_room.add_exit( last_action, name )
-
 
             self.current_room = self.rooms[name]
 
@@ -144,8 +176,6 @@ class ZorkMap( ZorkModule ):
                 log( "map: found %d items: %s" % ( len(inventory), ",".join(inventory) ))
             self.current_room.update_inventory( inventory )
                 
-
-        
     def save_map( self, z, args ):
 
         filename = "map.pickle"
@@ -172,6 +202,7 @@ class ZorkMap( ZorkModule ):
         log( "loaded map to %s" % filename )
 
     def find_item( self, z, args ):
+
         text = args.pop()
 
         log( "map: searching for an item matching \"%s\"" % text )
@@ -179,7 +210,7 @@ class ZorkMap( ZorkModule ):
         for n,r in self.rooms.items():
             for i in r.inventory:
                 if i.find( text ) != -1:
-                    log( "map: %s: %s" % ( n, i ) )
+                    log( "map: found matching item %s in %s" % ( i,n ) )
         
     def __init__( self ):
         self.rooms = {}
@@ -188,6 +219,7 @@ class ZorkMap( ZorkModule ):
         register_zorkshell_command( "/savemap", self.save_map )
         register_zorkshell_command( "/loadmap", self.save_map )
         register_zorkshell_command( "/finditem", self.find_item )
+        register_zorkshell_command( "/nav", self.find_a_path )
         log( "map: please make sure \"brief\" descriptions are on." )
         
 
