@@ -1,0 +1,32 @@
+ZorkShell
+
+I've always wanted to beat Zork,  the original text mode Dungeon game.
+
+Every time I've started,  I've ended up keeping multiple sets of notes
+(in text files,  on paper,  etc.) about which rooms lead to which
+others,  where I last saw a given item ... keeping them updated was a pain.
+If you wrote the game today you'd probably include features to make
+the game more playable,  like an online map and inventory tracker.
+
+Alas,  the poor folks who implemented it long ago didn't;  probably
+those features were next on the list when their lamp ran out of oil
+and someone made the decision to "ship it anyway".
+
+So I've been building them.  Call it cheating if you want.
+
+Zorkshell (so far) will:
+
+* save and restore multiple saved games (see /save and /restore) 
+* build an interactive map as you walk around (see /loadmap and /savemap) 
+* show you where exits from the room you're in go (see /map)
+* help you navigate to a specific place (see /nav)
+* keep track of where you last saw items (see /finditem)
+
+Just clone this repository and run `zorkshell.py` at your commandline. 
+
+Enjoy your adventuring.  Patches welcome if you can carry them out of
+the cave with you.
+
+Don't get eaten by a grue,
+
+Will 
