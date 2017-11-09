@@ -8,12 +8,22 @@ class ZSave(ZorkModule):
     zork_builtin_save_filename = 'dsave.dat'
     
     def save( self, z, args ):
+
+        if len(args) < 1:
+            log( "save: usage: /save name" )
+            return
+        
         self.__saving=True
         self.__name = "%s.dat" % args.pop()
         log( "save: starting save to %s" % self.__name )
         z.write_to_zork( "save\n" )
 
     def restore( self, z, args ):
+
+        if len(args) < 1:
+            log( "save: usage: /restore name" )
+            return
+        
         self.__name = "%s.dat" % args.pop()
         
         if not os.path.exists( self.__name ):
