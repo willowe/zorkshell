@@ -4,11 +4,13 @@ import pickle
 from module import ZorkModule
 from lib.common import *
 
-ignore = { "You can't go that way.\r\n>": 1,
-           "I don't understand that.\r\n>": 1,
-           "Huh?\r\n>": 1,
-           "There is a wall there.\r\n>": 1,
-           "The game is over.\r\n": 1,
+# these will be compared to the first line of output from Zork
+# after it's been stripped of newlines
+ignore = { "You can't go that way.": 1,
+           "I don't understand that.": 1,
+           "Huh?": 1,
+           "There is a wall there.": 1,
+           "The game is over.": 1,
            ">": 1
 }
 
@@ -66,6 +68,10 @@ class ZorkMap( ZorkModule ):
 
     def find_a_path( self, z, args ):
 
+        if len(args) < 1:
+            log( "map: usage: /nav Room Name" )
+            return
+        
         # this is a brute-force depth-first search
         # not guarunteed to find the *shortest* path
         # probably suboptimal,  but hey it works
@@ -83,6 +89,8 @@ class ZorkMap( ZorkModule ):
         path.append( (c, None ) )
                      
         found = False
+        path_string = ""
+        
         while len(path) > 0 and not found:
 
             r = path[-1][0]                 # last room in the path
@@ -101,11 +109,11 @@ class ZorkMap( ZorkModule ):
                     if s[0].name == n:
                         walked_in_a_circle = True
                     path_string = " ".join([ path_string, "%s:%s" % (s[0].name, s[1]) ])
-                log( "map: inspecting path %s" % path_string )
+                debug( "map: inspecting path %s" % path_string )
 
                 if walked_in_a_circle:
                     # go backwards and try a different exit from the same room
-                    log( "detected cycle" )
+                    debug( "map: /nav detected cycle" )
                 elif n == room_name:
                     # woohoo we're done
                     found = True
@@ -114,10 +122,9 @@ class ZorkMap( ZorkModule ):
                     path.append( (self.rooms[n], None) ) 
 
         if found:
-            log( "map: /nav found a path" )
+            log( "map: %s" % path_string )
         else:
-            log( "map: no paths found" )
-                    
+            log( "map: no paths found to %s" % room_name )
     
     def show_map( self, z, args ):
         if not self.current_room:
@@ -133,10 +140,6 @@ class ZorkMap( ZorkModule ):
         
     def output_processor( self, text, z ):
         
-        if ignore.has_key( text ):
-            debug( "map: ignored" )
-            return
-
         last_action = z.last_write().lower().strip()
         is_motion = False
         for x in motion_commands:
@@ -145,6 +148,10 @@ class ZorkMap( ZorkModule ):
 
         lines = re.split( "\r\n", text )
 
+        if ignore.has_key( lines[0] ):
+            debug( "map: ignored" )
+            return
+        
         # what room are we in?
         if room_name_regexp.match( lines[0] ):
 
@@ -166,12 +173,13 @@ class ZorkMap( ZorkModule ):
                 debug( "map: updated room description for %s" % self.current_room.name )
                 self.current_room.update_description( text )
             elif is_motion:
+                log( "map: motion to an unknown place,  lost current room" )
                 self.current_room = None
 
         inventory = []
         you_can_see = False
         for l in lines:
-            if you_can_see and not l.endswith( "contains:" ) and not ignore.has_key( l ):
+            if you_can_see and not l.endswith( "contains:" ) and not ignore.has_key( l ) and l.startswith( " " ):
                 inventory.append( l )
             else:
                 m = inventory_regexp.match( l )
@@ -205,7 +213,7 @@ class ZorkMap( ZorkModule ):
         if len(args) > 0:
             filename = "%s.pickle" % args.pop()
 
-        f = open( filename, "w" )
+        f = open( filename, "r" )
         self.rooms = pickle.load( f )
         f.close
 
