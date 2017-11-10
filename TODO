@@ -1,0 +1,6 @@
+Autosave:
+	every X minutes or X user commands?
+	map too?
+
+/save without arguments makes a timestamped backup
+/load without arguments loads the last backup using ctime()
