@@ -133,15 +133,26 @@ class ZorkMap( ZorkModule ):
             log( "map: no paths found to %s" % room_name )
     
     def show_map( self, z, args ):
-        if not self.current_room:
+
+        r = None
+        
+        room_name = " ".join( args )
+        if room_name:
+            r = self.rooms[room_name]
+            if not r:
+                log( "map: can't find a room named %s" % room_name )
+                return
+        elif not self.current_room:
             log( "map: I don't know what room we're in" )
             return
+        else:
+            r = self.current_room
         
-        log( "map: showing exits for %s" % self.current_room.name )
-        exits = self.current_room.directions.keys()
+        log( "map: showing exits for %s" % r.name )
+        exits = r.directions.keys()
         exits.sort()
         for e in exits:
-            s = self.rooms[self.current_room.directions[e]]
+            s = self.rooms[r.directions[e]]
             log( "map:               %2s: %s" % (e, s.name) )
         
     def output_processor( self, text, z ):
