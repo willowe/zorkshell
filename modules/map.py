@@ -31,6 +31,9 @@ class ZorkRoom:
         self.descr = None
         self.directions = {}
         self.inventory = []
+
+    def forget_exits( self ):
+        self.directions = {}
         
     def add_exit( self, dir, name ):
         self.directions[dir] = name
@@ -67,6 +70,23 @@ class ZorkRoom:
         
 
 class ZorkMap( ZorkModule ):
+
+    def _room_from_args( self, args ):
+        room_name = " ".join( args )
+        r = None
+
+        if room_name:
+            r = self.rooms[room_name]
+            if not r:
+                log( "map: can't find a room named %s" % room_name )
+                return
+        elif not self.current_room:
+            log( "map: I don't know what room we're in and you didn't specify" )
+            return
+        else:
+            r = self.current_room
+
+        return r
 
     def find_a_path( self, z, args ):
 
@@ -131,22 +151,22 @@ class ZorkMap( ZorkModule ):
             log( "map: %s" % path_string )
         else:
             log( "map: no paths found to %s" % room_name )
-    
+
+    def forget_exits( self, z, args ):
+        r = self._room_from_args( args )
+
+        if not r:
+            return
+        
+        r.forget_exits()
+        log( "forgot all exits from %s" % r.name )
+        return
+            
     def show_map( self, z, args ):
 
-        r = None
-        
-        room_name = " ".join( args )
-        if room_name:
-            r = self.rooms[room_name]
-            if not r:
-                log( "map: can't find a room named %s" % room_name )
-                return
-        elif not self.current_room:
-            log( "map: I don't know what room we're in" )
+        r = self._room_from_args( args )
+        if not r:
             return
-        else:
-            r = self.current_room
         
         log( "map: showing exits for %s" % r.name )
         exits = r.directions.keys()
@@ -254,6 +274,7 @@ class ZorkMap( ZorkModule ):
         register_zorkshell_command( "/savemap", self.save_map )
         register_zorkshell_command( "/loadmap", self.load_map )
         register_zorkshell_command( "/finditem", self.find_item )
+        register_zorkshell_command( "/forget", self.forget_exits )
         register_zorkshell_command( "/nav", self.find_a_path )
         log( "map: please make sure \"brief\" descriptions are on." )
         
