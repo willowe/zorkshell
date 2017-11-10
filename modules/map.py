@@ -79,7 +79,11 @@ class ZorkMap( ZorkModule ):
         room_name = " ".join( args )
         
         if not self.rooms.has_key( room_name ):
-            log( "I can't find a room named %s" % room_name )
+            log( "map: I can't find a room named %s" % room_name )
+            return
+
+        if not self.current_room:
+            log( "map: Can\'t navigate because I don't know what room I\'m in" )
             return
         
         log( "searching for a path to %s" % room_name )
