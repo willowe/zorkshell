@@ -10,6 +10,8 @@ ignore = { "You can't go that way.": 1,
            "I don't understand that.": 1,
            "Huh?": 1,
            "There is a wall there.": 1,
+           "There is no way up.": 1,
+           "There is no way down.": 1,
            "The game is over.": 1,
            ">": 1
 }
