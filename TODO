@@ -5,7 +5,5 @@ Autosave:
 /save without arguments makes a timestamped backup
 /load without arguments loads the last backup using ctime()
 
-Normalize motion commands ("up" -> "u", "down"->"d")
-
 /drive like /nav but executes commands
 

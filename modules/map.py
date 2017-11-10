@@ -13,10 +13,18 @@ ignore = { "You can't go that way.": 1,
            "There is no way up.": 1,
            "There is no way down.": 1,
            "The game is over.": 1,
-           ">": 1
-}
+           ">": 1 }
 
-motion_commands = [ "north", "south", "east", "west", "up", "down", "ne", "se", "nw", "sw" ]
+motion_commands = { 'north': 'n', 'n':'n',
+                    'south': 's', 's':'s',
+                    'east': 'e' , 'e':'e',
+                    'west': 'w', 'w':'w',
+                    'up': 'u', 'u':'u',
+                    'down': 'd', 'd':'d',
+                    'ne': 'ne', 
+                    'se':'se', 
+                    'nw':'nw', 
+                    'sw':'sw' }
 
 # room names are sequences of capitalized words
 # except for a few like "Bottom of Well" and "Entrance to Hades"
@@ -179,16 +187,22 @@ class ZorkMap( ZorkModule ):
         
         last_action = z.last_write().lower().strip()
         is_motion = False
-        for x in motion_commands:
-            if x.startswith( last_action ):
-                is_motion = True
+        direction = None
+        if motion_commands.has_key( last_action ):
+            is_motion = True
+            direction = motion_commands[last_action]
 
         lines = re.split( "\r\n", text )
 
         if ignore.has_key( lines[0] ):
             debug( "map: ignored" )
             return
-        
+
+        dont_save_exit = False
+        if lines[0] == "Unfortunately, it is impossible to tell directions in here.":
+            dont_save_exit = True
+            lines.pop(0)
+            
         # what room are we in?
         if room_name_regexp.match( lines[0] ):
 
@@ -198,9 +212,9 @@ class ZorkMap( ZorkModule ):
                 r = ZorkRoom( name )
                 self.rooms[name] = r
             
-            if self.current_room and is_motion:
-                debug( "map: adding exit %s to %s: %s" % ( last_action, self.current_room.name, name )) 
-                self.current_room.add_exit( last_action, name )
+            if self.current_room and is_motion and not dont_save_exit:
+                debug( "map: adding exit %s to %s: %s" % ( direction, self.current_room.name, name )) 
+                self.current_room.add_exit( direction, name )
 
             self.current_room = self.rooms[name]
 
